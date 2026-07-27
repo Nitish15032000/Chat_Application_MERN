@@ -18,17 +18,25 @@ export const editProfile = async (req, res) => {
   try {
     let { name } = req.body;
     let image;
+
     if (req.file) {
-      image = await uploadOnCloudinary(req.file.path);
+      try {
+        image = await uploadOnCloudinary(req.file.path);
+      } catch (uploadError) {
+        console.error("Profile image upload failed:", uploadError);
+        image = "";
+      }
     }
-    let user = await User.findByIdAndUpdate(
-      req.userId,
-      {
-        name,
-        image,
-      },
-      { new: true },
-    );
+
+    let updateData = {};
+    if (name) {
+      updateData.name = name;
+    }
+    if (image !== undefined) {
+      updateData.image = image;
+    }
+
+    let user = await User.findByIdAndUpdate(req.userId, updateData, { new: true });
 
     if (!user) {
       return res.status(400).json({ message: "user not found" });
