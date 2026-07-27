@@ -14,6 +14,7 @@ import CryptoJS from 'crypto-js'
 import { serverUrl } from '../main'
 import { setMessages } from '../redux/messageSlice'
 
+// Shared secret key for encryption/decryption
 const CHAT_SECRET_KEY = 'shared-secret-between-user1-and-user2'
 
 function MessageArea() {
