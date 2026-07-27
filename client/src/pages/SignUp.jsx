@@ -1,0 +1,71 @@
+import axios from 'axios'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { serverUrl } from '../main'
+import { useDispatch } from 'react-redux'
+import { setUserData } from '../redux/userSlice'
+
+function SignUp() {
+    let navigate = useNavigate()
+    let [show, setShow] = useState(false)
+    let [userName, setUserName] = useState("")
+    let [email, setEmail] = useState("")
+    let [password, setPassword] = useState("")
+    let [loading, setLoading] = useState(false)
+    let [err, setErr] = useState("")
+    let dispatch = useDispatch()
+
+    const handleSignUp = async (e) => {
+        e.preventDefault()
+        setLoading(true)
+        try {
+            let result = await axios.post(`${serverUrl}/api/auth/signup`, {
+                userName, email, password
+            }, { withCredentials: true })
+            dispatch(setUserData(result.data))
+            navigate("/profile")
+            setEmail("")
+            setPassword("")
+            setLoading(false)
+            setErr("")
+        } catch (error) {
+            console.log(error)
+            setLoading(false)
+            setErr(error?.response?.data?.message || "Sign up failed")
+        }
+    }
+
+    return (
+        <div className='min-h-screen bg-slate-950 flex items-center justify-center px-4 py-10'>
+            <div className='w-full max-w-[560px] rounded-[32px] overflow-hidden border border-white/10 bg-slate-900/90 shadow-[0_30px_90px_rgba(15,23,42,0.55)]'>
+                <div className='relative bg-gradient-to-br from-slate-800 via-sky-700 to-cyan-600 p-10'>
+                    <div className='absolute inset-0 opacity-25 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.32),_transparent_35%)]' />
+                    <h1 className='relative text-4xl font-extrabold text-white'>Create your account</h1>
+                    <p className='relative mt-3 text-slate-200/90'>Join Chatly and start messaging instantly.</p>
+                </div>
+                <form className='px-10 py-8 flex flex-col gap-5' onSubmit={handleSignUp}>
+                    <div className='space-y-3'>
+                        <label className='text-sm font-semibold text-slate-300'>Username</label>
+                        <input type='text' placeholder='Enter username' className='w-full rounded-3xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 shadow-lg shadow-sky-500/10 outline-none transition focus:border-cyan-400' onChange={(e) => setUserName(e.target.value)} value={userName} />
+                    </div>
+                    <div className='space-y-3'>
+                        <label className='text-sm font-semibold text-slate-300'>Email</label>
+                        <input type='email' placeholder='Enter email' className='w-full rounded-3xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 shadow-lg shadow-sky-500/10 outline-none transition focus:border-cyan-400' onChange={(e) => setEmail(e.target.value)} value={email} />
+                    </div>
+                    <div className='space-y-3'>
+                        <div className='flex items-center justify-between text-sm font-semibold text-slate-300'>
+                            <label>Password</label>
+                            <button type='button' className='text-cyan-300' onClick={() => setShow(prev => !prev)}>{show ? 'Hide' : 'Show'}</button>
+                        </div>
+                        <input type={show ? 'text' : 'password'} placeholder='Create password' className='w-full rounded-3xl border border-slate-700 bg-slate-950/70 px-5 py-4 text-slate-100 shadow-lg shadow-sky-500/10 outline-none transition focus:border-cyan-400' onChange={(e) => setPassword(e.target.value)} value={password} />
+                    </div>
+                    {err && <p className='text-sm text-rose-400'>{err}</p>}
+                    <button className='mt-2 h-14 w-full rounded-3xl bg-gradient-to-r from-cyan-400 to-sky-500 text-slate-950 text-lg font-semibold shadow-xl shadow-cyan-500/20 transition hover:shadow-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-70' disabled={loading}>{loading ? 'Creating account...' : 'Sign Up'}</button>
+                    <p className='text-center text-sm text-slate-400'>Already have an account? <span className='cursor-pointer text-cyan-300 hover:text-cyan-200' onClick={() => navigate('/login')}>Login</span></p>
+                </form>
+            </div>
+        </div>
+    )
+}
+
+export default SignUp
