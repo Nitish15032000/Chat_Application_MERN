@@ -36,7 +36,7 @@ export const editProfile = async (req, res) => {
       updateData.image = image;
     }
 
-    let user = await User.findByIdAndUpdate(req.userId, updateData, { new: true });
+    let user = await User.findByIdAndUpdate(req.userId, updateData, { returnDocument: 'after' });
 
     if (!user) {
       return res.status(400).json({ message: "user not found" });
