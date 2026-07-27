@@ -10,8 +10,11 @@ import EmojiPicker from 'emoji-picker-react'
 import SenderMessage from './SenderMessage'
 import ReceiverMessage from './ReceiverMessage'
 import axios from 'axios'
+import CryptoJS from 'crypto-js'
 import { serverUrl } from '../main'
 import { setMessages } from '../redux/messageSlice'
+
+const CHAT_SECRET_KEY = 'shared-secret-between-user1-and-user2'
 
 function MessageArea() {
   let { selectedUser, userData, socket } = useSelector(state => state.user)
@@ -34,8 +37,9 @@ function MessageArea() {
       return
     }
     try {
+      const encryptedText = input ? CryptoJS.AES.encrypt(input, CHAT_SECRET_KEY).toString() : ''
       let formData = new FormData()
-      formData.append('message', input)
+      formData.append('message', encryptedText)
       if (backendImage) {
         formData.append('image', backendImage)
       }
@@ -52,6 +56,20 @@ function MessageArea() {
   const onEmojiClick = (emojiData) => {
     setInput(prevInput => prevInput + emojiData.emoji)
     setShowPicker(false)
+  }
+
+  const renderMessage = (encryptedMessage) => {
+    if (!encryptedMessage) {
+      return ''
+    }
+
+    try {
+      const bytes = CryptoJS.AES.decrypt(encryptedMessage, CHAT_SECRET_KEY)
+      const originalText = bytes.toString(CryptoJS.enc.Utf8)
+      return originalText || encryptedMessage
+    } catch (error) {
+      return encryptedMessage
+    }
   }
 
   useEffect(() => {
@@ -83,9 +101,10 @@ function MessageArea() {
 
             <div className='flex-1 overflow-hidden'>
               <div className='h-full overflow-y-auto px-6 py-8 space-y-6 scrollbar-hidden bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.08),transparent_40%),linear-gradient(180deg,#0f172a,#020617)]'>
-                {messages?.map((mess, index) => (
-                  mess.sender === userData._id ? <SenderMessage key={index} image={mess.image} message={mess.message} /> : <ReceiverMessage key={index} image={mess.image} message={mess.message} />
-                ))}
+                {messages?.map((mess, index) => {
+                  const displayedMessage = renderMessage(mess.message)
+                  return mess.sender === userData._id ? <SenderMessage key={index} image={mess.image} message={displayedMessage} /> : <ReceiverMessage key={index} image={mess.image} message={displayedMessage} />
+                })}
               </div>
             </div>
           </div>
